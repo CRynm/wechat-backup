@@ -102,7 +102,7 @@ func handleBasicInfoAndPostList(ctx *Context) error {
 		return errors.Errorf("解析文章列表失败: %v", err)
 	}
 
-	// 保存文章
+	// 保存文章 -
 	var posts []*model.Post
 	for _, item := range data.List {
 		publishAt := time.Unix(item.CommMsgInfo.Datetime, 0)
