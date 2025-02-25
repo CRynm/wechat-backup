@@ -52,8 +52,8 @@ func (r *ProfileRule) Handle(ctx *Context) error {
 
 	// 获取跳转间隔和最小时间配置
 	// TODO: 这些配置值应该从配置文件中读取
-	jumpInterval := int64(8)                                   // 8秒
-	jumpMinTime := time.Now().Add(-24*time.Hour).Unix() * 1000 // 默认抓取最近一天的文章
+	jumpInterval := int64(8) * 1000                               // 8秒
+	jumpMinTime := time.Now().Add(-24*60*time.Hour).Unix() * 1000 // 默认抓取最近一天的文章
 
 	// 获取注入脚本
 	script := getInsertProfileScript(jumpInterval, jumpMinTime)
@@ -102,7 +102,7 @@ func handleBasicInfoAndPostList(ctx *Context) error {
 		return errors.Errorf("解析文章列表失败: %v", err)
 	}
 
-	// 保存文章 -
+	// 保存文章
 	var posts []*model.Post
 	for _, item := range data.List {
 		publishAt := time.Unix(item.CommMsgInfo.Datetime, 0)
@@ -115,7 +115,6 @@ func handleBasicInfoAndPostList(ctx *Context) error {
 			}
 		}
 
-		// 处理多图文
 		for _, multiItem := range item.AppMsgExtInfo.MultiAppMsgItemList {
 			if multiItem.Title != "" && multiItem.ContentURL != "" {
 				post := buildPost(multiItem, publishAt)
@@ -298,6 +297,24 @@ func savePostsToDB(posts []*model.Post) error {
 		_, err := collection.UpdateOne(context.Background(), filter, update, opts)
 		if err != nil {
 			return err
+		}
+	}
+
+	// 打印日志
+	if len(posts) > 0 {
+		profileCollection := db.Collection("profiles")
+		var profile model.Profile
+		err := profileCollection.FindOne(context.Background(), bson.M{"msgBiz": posts[0].MsgBiz}).Decode(&profile)
+		if err == nil && profile.Title != "" {
+			log.Infof("[profile] msgBiz: %s, title: %s", posts[0].MsgBiz, profile.Title)
+		}
+
+		for _, post := range posts {
+			publishTime := ""
+			if !post.PublishAt.IsZero() {
+				publishTime = post.PublishAt.Format("2006-01-02 15:04")
+			}
+			log.Infof("[保存历史文章] 发布时间: %s, 标题: %s", publishTime, post.Title)
 		}
 	}
 

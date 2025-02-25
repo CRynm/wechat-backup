@@ -118,16 +118,50 @@ func (s *backupServer) Run(ctx context.Context) error {
 	// 设置MITM处理程序, 仅当wx的域名才处理
 	proxy.OnRequest(goproxy.ReqHostIs("mp.weixin.qq.com:443")).HandleConnect(customAlwaysMitm)
 
-	// 修改响应内容时添加日志
+	proxy.OnRequest().DoFunc(func(req *http.Request, ctx *goproxy.ProxyCtx) (*http.Request, *http.Response) {
+		if req == nil {
+			return req, nil
+		}
+
+		// 读取请求体
+		requestBody, err := io.ReadAll(req.Body)
+		if err != nil {
+			log.Errorf("读取请求体失败: %v", err)
+			return req, nil
+		}
+
+		// 恢复请求体
+		req.Body = io.NopCloser(bytes.NewReader(requestBody))
+
+		// 将请求体存储到上下文中
+		ctx.UserData = &rules2.Context{
+			RequestBody: requestBody,
+		}
+
+		return req, nil
+	})
+
 	proxy.OnResponse().DoFunc(func(resp *http.Response, ctx *goproxy.ProxyCtx) *http.Response {
 		if resp == nil || resp.Request == nil {
 			return resp
 		}
 
+		if ctx.UserData == nil {
+			log.Error("UserData is nil")
+			return resp
+		}
+
+		userData, ok := ctx.UserData.(*rules2.Context)
+		if !ok {
+			log.Error("UserData is not of type *rules2.Context")
+			return resp
+		}
+
 		ruleCtx := &rules2.Context{
-			URL:     resp.Request.URL.String(),
-			Method:  resp.Request.Method,
-			Headers: make(map[string]string),
+			URL:         resp.Request.URL.String(),
+			Method:      resp.Request.Method,
+			Headers:     make(map[string]string),
+			RequestBody: userData.RequestBody,
 		}
 
 		// 复制请求头
@@ -149,13 +183,13 @@ func (s *backupServer) Run(ctx context.Context) error {
 
 		// 应用规则
 		if err := rules2.NewManager().Handle(ruleCtx); err != nil {
-			log.Errorf("规则处理失败: %v", err)
+			log.Errorf("规则处理失败: %+v", err)
 		}
 
 		// 恢复响应体
-		resp.Body = io.NopCloser(bytes.NewReader(body))
-		resp.ContentLength = int64(len(body))
-		resp.Header.Set("Content-Length", strconv.Itoa(len(body)))
+		resp.Body = io.NopCloser(bytes.NewReader(ruleCtx.Body))
+		resp.ContentLength = int64(len(ruleCtx.Body))
+		resp.Header.Set("Content-Length", strconv.Itoa(len(ruleCtx.Body)))
 
 		return resp
 	})

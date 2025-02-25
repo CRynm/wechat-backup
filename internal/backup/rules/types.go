@@ -8,6 +8,7 @@ const (
 	RuleTypeProfile RuleType = "profile" // 公众号资料
 	RuleTypeList    RuleType = "list"    // 文章列表
 	RuleTypeContent RuleType = "content" // 文章内容
+	RuleTypeLogger  RuleType = "logger"  // 注入的html发回的日志
 )
 
 // Rule 定义规则接口
@@ -24,10 +25,11 @@ type Rule interface {
 
 // Context 规则处理上下文
 type Context struct {
-	URL     string            // 请求URL
-	Method  string            // 请求方法
-	Headers map[string]string // 请求头
-	Body    []byte            // 响应内容
+	URL         string            // 请求URL
+	Method      string            // 请求方法
+	Headers     map[string]string // 请求头
+	Body        []byte            // 响应内容
+	RequestBody []byte            // 请求内容
 }
 
 // BaseRule 基础规则结构

@@ -10,6 +10,9 @@ func NewManager() *Manager {
 	// 注册默认规则
 	m.Register(
 		NewProfileRule(),
+		NewFrontendLoggerRule(),
+		NewFirstPostRule(),
+		NewNextLinkRule(),
 		//NewListRule(),
 		//NewContentRule(),
 	)
