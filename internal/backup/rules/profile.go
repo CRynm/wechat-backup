@@ -78,7 +78,7 @@ func handleBasicInfoAndPostList(ctx *Context) error {
 	}
 
 	// 保存到数据库
-	if err := saveProfile(profile); err != nil {
+	if err = saveProfile(profile); err != nil {
 		return err
 	}
 
@@ -98,7 +98,7 @@ func handleBasicInfoAndPostList(ctx *Context) error {
 	// 解析文章数据
 	var data model.ArticleList
 
-	if err := json.Unmarshal([]byte(cleanContent), &data); err != nil {
+	if err = json.Unmarshal([]byte(cleanContent), &data); err != nil {
 		return errors.Errorf("解析文章列表失败: %v", err)
 	}
 
@@ -127,15 +127,12 @@ func handleBasicInfoAndPostList(ctx *Context) error {
 
 	// 保存文章到数据库
 	if err := savePostsToDB(posts); err != nil {
-		return fmt.Errorf("保存文章失败: %v", err)
+		return err
 	}
 
 	// 更新公众号最新发布时间
-	if err := updateProfileLatestPublishAt(posts); err != nil {
-		return fmt.Errorf("更新发布时间失败: %v", err)
-	}
 
-	return nil
+	return updateProfileLatestPublishAt(posts)
 }
 
 func parseProfile(content string) (*model.Profile, error) {
@@ -180,7 +177,7 @@ func saveProfile(profile *model.Profile) error {
 	opts := options.Update().SetUpsert(true)
 
 	_, err := collection.UpdateOne(context.Background(), filter, update, opts)
-	return err
+	return errors.Wrap(err, "保存公众号资料失败")
 }
 
 func handleInvalidAccount(body string) error {
@@ -296,7 +293,7 @@ func savePostsToDB(posts []*model.Post) error {
 		opts := options.Update().SetUpsert(true)
 		_, err := collection.UpdateOne(context.Background(), filter, update, opts)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "保存文章失败")
 		}
 	}
 
@@ -347,5 +344,5 @@ func updateProfileLatestPublishAt(posts []*model.Post) error {
 	}
 
 	_, err := collection.UpdateOne(context.Background(), filter, update)
-	return err
+	return errors.Wrap(err, "更新公众号最新发布时间失败")
 }

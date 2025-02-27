@@ -13,8 +13,8 @@ func NewManager() *Manager {
 		NewFrontendLoggerRule(),
 		NewFirstPostRule(),
 		NewNextLinkRule(),
-		//NewListRule(),
-		//NewContentRule(),
+		NewListRule(),
+		NewContentRule(),
 	)
 	return m
 }

@@ -50,20 +50,19 @@ type Post struct {
 	MsgMid        string    `bson:"msgMid" json:"msgMid"`               // 消息mid
 	MsgIdx        string    `bson:"msgIdx" json:"msgIdx"`               // 消息idx
 	Title         string    `bson:"title" json:"title"`                 // 文章标题
-	Author        string    `bson:"author" json:"author"`               // 作者
-	Digest        string    `bson:"digest" json:"digest"`               // 文章摘要
-	Cover         string    `bson:"cover" json:"cover"`                 // 封面图片
 	Link          string    `bson:"link" json:"link"`                   // 文章链接
-	SourceURL     string    `bson:"sourceUrl" json:"sourceUrl"`         // 原文链接
+	PublishAt     time.Time `bson:"publishAt" json:"publishAt"`         // 发布时间
+	Cover         string    `bson:"cover" json:"cover"`                 // 封面图片
+	Digest        string    `bson:"digest" json:"digest"`               // 文章摘要
 	Content       string    `bson:"content" json:"content"`             // 文章内容(纯文本)
 	HTML          string    `bson:"html" json:"html"`                   // 文章HTML
-	PublishAt     time.Time `bson:"publishAt" json:"publishAt"`         // 发布时间
-	UpdateNumAt   time.Time `bson:"updateNumAt" json:"updateNumAt"`     // 上次更新数据的时间
+	SourceURL     string    `bson:"sourceUrl" json:"sourceUrl"`         // 原文链接
+	Author        string    `bson:"author" json:"author"`               // 作者
+	CopyrightStat int       `bson:"copyrightStat" json:"copyrightStat"` // 版权状态(11:原创,100:普通)
+	WechatId      string    `bson:"wechatId" json:"wechatId"`           // 公众号ID
+	Username      string    `bson:"username" json:"username"`           // 用户名
 	ReadNum       int64     `bson:"readNum" json:"readNum"`             // 阅读数
 	LikeNum       int64     `bson:"likeNum" json:"likeNum"`             // 点赞数
-	LikeNum2      int64     `bson:"likeNum2" json:"likeNum2"`           // 在看数
-	WechatID      string    `bson:"wechatId" json:"wechatId"`           // 公众号ID
-	CopyrightStat int       `bson:"copyrightStat" json:"copyrightStat"` // 版权状态(11:原创,100:普通)
 	IsFail        bool      `bson:"isFail" json:"isFail"`               // 是否抓取失败
 }
 
