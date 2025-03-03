@@ -33,10 +33,10 @@ func NewContentRule() *ContentRule {
 
 func (r *ContentRule) Match(ctx *Context) bool {
 	link := ctx.URL
-	// 匹配三种URL格式
-	isPost := strings.Contains(link, "mp.weixin.qq.com/s?__biz")
-	isOldPost := strings.Contains(link, "mp/appmsg/show")
-	isShortLink := regexp.MustCompile(`mp\.weixin\.qq\.com\/s\/(\w|-){22}`).MatchString(link)
+	// 匹配三种URL格式，支持可选的:443端口
+	isPost := strings.Contains(link, "mp.weixin.qq.com") && strings.Contains(link, "/s?__biz")
+	isOldPost := strings.Contains(link, "mp.weixin.qq.com") && strings.Contains(link, "/mp/appmsg/show")
+	isShortLink := regexp.MustCompile(`mp\.weixin\.qq\.com(:\d+)?\/s\/(\w|-){22}`).MatchString(link)
 	return isPost || isOldPost || isShortLink
 }
 
