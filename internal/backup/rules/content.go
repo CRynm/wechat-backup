@@ -141,6 +141,8 @@ func (r *ContentRule) Handle(ctx *Context) error {
 		return err
 	}
 
+	log.Infof("=====> 文章内容提取到的信息:%+v", post)
+
 	// 将文章放入处理队列而不是直接保存
 	select {
 	case articleChan <- post:
@@ -273,28 +275,20 @@ func parsePostDetail(link string, content string) (*model.Post, error) {
 	}
 
 	// 提取阅读数和点赞数
-	re = regexp.MustCompile(`var readNum = "(\d+)";`)
+	re = regexp.MustCompile(`var\s+read_num_new\s*=\s*'(\d+)'`)
 	if matches := re.FindStringSubmatch(content); len(matches) > 1 {
 		readNum = parseInt64(matches[1])
 	}
 
-	re = regexp.MustCompile(`var likeNum = "(\d+)";`)
+	re = regexp.MustCompile(`old_like_count:\s*'(\d+)'`)
 	if matches := re.FindStringSubmatch(content); len(matches) > 1 {
 		likeNum = parseInt64(matches[1])
 	}
 
 	// 提取文章内容
-	re = regexp.MustCompile(`<div class="rich_media_content " id="js_content".*?>([\s\S]*?)</div>`)
+	re = regexp.MustCompile(`(?s)<div[^>]*id=["']js_content["'][^>]*>(.*?)</div>`)
 	if matches := re.FindStringSubmatch(content); len(matches) > 1 {
 		msgContentNonXSS = cleanContent(matches[1])
-	}
-
-	// 尝试其他格式的文章内容提取
-	if msgContentNonXSS == "" {
-		re = regexp.MustCompile(`<div class="rich_media_content.*?" id="js_content".*?>([\s\S]*?)</div>`)
-		if matches := re.FindStringSubmatch(content); len(matches) > 1 {
-			msgContentNonXSS = cleanContent(matches[1])
-		}
 	}
 
 	// 如果内容仍为空，记录警告
